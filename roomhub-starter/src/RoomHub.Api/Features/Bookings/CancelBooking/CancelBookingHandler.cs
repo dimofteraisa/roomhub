@@ -8,7 +8,8 @@ public sealed record CancelBookingCommand(Guid Id) : ICommand<Unit>;
 
 public sealed class CancelBookingHandler(
     IBookingRepository bookingRepository,
-    IUnitOfWork unitOfWork)
+    IUnitOfWork unitOfWork,
+    TimeProvider timeProvider)
     : ICommandHandler<CancelBookingCommand, Unit>
 {
     public async Task<Result<Unit>> HandleAsync(CancelBookingCommand command, CancellationToken cancellationToken = default)
@@ -19,7 +20,8 @@ public sealed class CancelBookingHandler(
             return Result<Unit>.Failure(BookingErrors.NotFound);
         }
 
-        var cancelResult = booking.Cancel();
+        var nowUtc = timeProvider.GetUtcNow().UtcDateTime;
+        var cancelResult = booking.Cancel(nowUtc);
         if (cancelResult.IsFailure)
         {
             return cancelResult;
